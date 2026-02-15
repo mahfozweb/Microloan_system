@@ -1,6 +1,5 @@
 @import "tailwindcss";
-
-
+@config "../tailwind.config.js";
 
 @theme {
   --color-primary-50: #f0f9ff;
@@ -25,12 +24,11 @@
   --color-secondary-800: #86198f;
   --color-secondary-900: #701a75;
 
-  --font-heading: 'Outfit', sans-serif;
+  --font-heading: "Outfit", sans-serif;
 
   --animate-float: float 3s ease-in-out infinite;
 
   @keyframes float {
-
     0%,
     100% {
       transform: translateY(0);
@@ -40,6 +38,8 @@
       transform: translateY(-10px);
     }
   }
+
+  --variant-dark: .dark &;
 }
 
 @layer base {
