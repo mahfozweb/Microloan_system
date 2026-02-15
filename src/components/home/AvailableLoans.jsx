@@ -49,45 +49,46 @@ const AvailableLoans = () => {
             <motion.div
               key={loan.id}
               variants={itemVariants}
-              className={`rounded-2xl p-6 border ${loan.borderColor} hover:shadow-lg transition-shadow duration-300 bg-white dark:bg-gray-800`}
+              className={`rounded-3xl overflow-hidden border ${loan.borderColor} hover:shadow-2xl transition-all duration-500 bg-white dark:bg-gray-800 flex flex-col group`}
             >
-              <div
-                className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${loan.color}`}
-              >
-                {loan.icon}
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                {loan.title}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {loan.description}
-              </p>
-
-              <div className="space-y-2 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Amount
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {loan.amount}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Interest
-                  </span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {loan.interest}
-                  </span>
+              <div className="relative h-44 overflow-hidden">
+                <img
+                  src={loan.image}
+                  alt={loan.title}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className={`absolute bottom-3 left-3 w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 ${loan.color}`}>
+                  {loan.icon}
                 </div>
               </div>
 
-              <Link
-                to={`/loans/${loan.id}`}
-                className="block w-full py-3 text-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Learn More
-              </Link>
+              <div className="p-5 flex flex-col flex-grow">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 transition-colors">
+                  {loan.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 line-clamp-2 min-h-[2.5rem]">
+                  {loan.description}
+                </p>
+
+                <div className="space-y-2 mb-6 bg-gray-50/50 dark:bg-gray-900/40 p-3 rounded-2xl border border-gray-100 dark:border-gray-700/50">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500 dark:text-gray-400">Amount</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{loan.amount}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500 dark:text-gray-400">Interest</span>
+                    <span className="font-bold text-primary-600">{loan.interest}</span>
+                  </div>
+                </div>
+
+                <Link
+                  to={`/loans/${loan.id}`}
+                  className="mt-auto block w-full py-3 text-center rounded-xl bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white font-bold hover:bg-primary-600 hover:text-white hover:border-primary-600 transition-all shadow-sm hover:shadow-primary-600/20 active:scale-95"
+                >
+                  Learn More
+                </Link>
+              </div>
             </motion.div>
           ))}
         </motion.div>
