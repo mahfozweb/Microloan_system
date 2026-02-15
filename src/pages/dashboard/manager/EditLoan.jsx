@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
 import { FiSave, FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-toastify";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
+import { loans } from "../../../data/loans";
 
-const AddLoan = () => {
+const EditLoan = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState(null);
   const [formData, setFormData] = useState({
@@ -17,6 +19,26 @@ const AddLoan = () => {
     description: "",
     requirements: "",
   });
+
+  useEffect(() => {
+    const loan = loans.find((l) => l.id === parseInt(id));
+    if (loan) {
+      // Extract numbers from strings like "$500 - $5,000"
+      const amounts = loan.amount.replace(/\$|,/g, "").split(" - ");
+      setFormData({
+        title: loan.title,
+        minAmount: amounts[0] || "",
+        maxAmount: amounts[1] || "",
+        interest: loan.interest,
+        duration: loan.duration,
+        description: loan.description,
+        requirements: "Valid ID, Bank Statement, Income Proof", // Placeholder as it's not in the static data
+      });
+    } else {
+      toast.error("Loan product not found");
+      navigate("/dashboard/manage-loans");
+    }
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,7 +52,7 @@ const AddLoan = () => {
     // Simulating API call
     setTimeout(() => {
       setStatus("success");
-      toast.success("New loan product created successfully!");
+      toast.success("Loan product updated successfully!");
       setTimeout(() => navigate("/dashboard/manage-loans"), 1000);
     }, 1500);
   };
@@ -38,22 +60,24 @@ const AddLoan = () => {
   return (
     <DashboardLayout>
       <Helmet>
-        <title>Add Loan - Dashboard</title>
+        <title>Edit Loan - Dashboard</title>
       </Helmet>
 
-      <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 mb-2 transition-colors"
-        >
-          <FiArrowLeft className="mr-2" /> Back to List
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Add New Loan
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Create a new loan product
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 mb-2 transition-colors"
+          >
+            <FiArrowLeft className="mr-2" /> Back to List
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Edit Loan Product
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Update details for {formData.title}
+          </p>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 max-w-2xl">
@@ -172,12 +196,12 @@ const AddLoan = () => {
               className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {status === "loading" ? (
-                <span className="animate-pulse">Saving...</span>
+                <span className="animate-pulse">Updating...</span>
               ) : status === "success" ? (
-                <span className="text-green-200">Loan Created!</span>
+                <span className="text-green-200">Updated!</span>
               ) : (
                 <>
-                  <FiSave /> Save Loan Product
+                  <FiSave /> Update Loan Product
                 </>
               )}
             </button>
@@ -188,4 +212,4 @@ const AddLoan = () => {
   );
 };
 
-export default AddLoan;
+export default EditLoan;

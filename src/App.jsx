@@ -30,6 +30,7 @@ import LoanApplications from "./pages/dashboard/admin/LoanApplications";
 // Manager Dashboard
 import AddLoan from "./pages/dashboard/manager/AddLoan";
 import ManageLoans from "./pages/dashboard/manager/ManageLoans";
+import EditLoan from "./pages/dashboard/manager/EditLoan";
 import PendingLoans from "./pages/dashboard/manager/PendingLoans";
 import ApprovedLoans from "./pages/dashboard/manager/ApprovedLoans";
 import ManagerProfile from "./pages/dashboard/manager/MyProfile";
@@ -122,6 +123,14 @@ function App() {
                     element={
                       <PrivateRoute allowedRoles={["manager", "admin"]}>
                         <ManageLoans />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/edit-loan/:id"
+                    element={
+                      <PrivateRoute allowedRoles={["manager", "admin"]}>
+                        <EditLoan />
                       </PrivateRoute>
                     }
                   />
