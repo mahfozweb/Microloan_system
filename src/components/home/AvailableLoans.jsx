@@ -6,6 +6,7 @@ import { FiArrowRight } from "react-icons/fi";
 const AvailableLoans = () => {
   const displayedLoans = loans.slice(0, 4);
 
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

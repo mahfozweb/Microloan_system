@@ -1,4 +1,14 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithPopup,
+    updateProfile
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
@@ -16,97 +26,95 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulating checking for a persisted session
-        const storedUser = localStorage.getItem('loanlink_user');
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (error) {
-                console.error('Failed to parse stored user', error);
-                localStorage.removeItem('loanlink_user');
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            if (currentUser) {
+                // Determine role: Check localStorage first, otherwise fallback to email logic
+                let role = localStorage.getItem(`loanlink_role_${currentUser.uid}`) || 'borrower';
+
+                // Backup email logic for new logins if role isn't in storage
+                if (!localStorage.getItem(`loanlink_role_${currentUser.uid}`)) {
+                    if (currentUser.email?.includes('manager')) role = 'manager';
+                    else if (currentUser.email?.includes('admin')) role = 'admin';
+                }
+
+                setUser({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    name: currentUser.displayName,
+                    photoURL: currentUser.photoURL,
+                    emailVerified: currentUser.emailVerified,
+                    role: role
+                });
+            } else {
+                setUser(null);
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const register = async (email, password, userData) => {
         setLoading(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
         try {
-            const newUser = {
-                uid: 'mock-user-id-' + Date.now(),
-                email,
-                name: userData.name || 'New User',
-                photoURL: userData.photoURL || 'https://via.placeholder.com/150',
-                role: userData.role || 'borrower',
-                emailVerified: true,
-            };
+            const result = await createUserWithEmailAndPassword(auth, email, password);
 
-            setUser(newUser);
-            localStorage.setItem('loanlink_user', JSON.stringify(newUser));
-            localStorage.setItem('token', 'mock-jwt-token');
+            // Update profile with name and photo
+            await updateProfile(result.user, {
+                displayName: userData.name,
+                photoURL: userData.photoURL || 'https://via.placeholder.com/150'
+            });
 
-            toast.success('Registration successful! (Mock)');
-            setLoading(false);
-            return { user: newUser };
+            // Persist role in localStorage (Ideally this would be in Firestore)
+            localStorage.setItem(`loanlink_role_${result.user.uid}`, userData.role || 'borrower');
+
+            toast.success('Registration successful!');
+            return result;
         } catch (error) {
-            setLoading(false);
-            toast.error('Registration failed');
+            toast.error(error.message || 'Registration failed');
             throw error;
+        } finally {
+            setLoading(false);
         }
     };
 
     const login = async (email, password) => {
         setLoading(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
         try {
-            // accepting any password for mock
-            let role = 'borrower';
-            if (email.includes('manager')) role = 'manager';
-            if (email.includes('admin')) role = 'admin';
-
-            const mockUser = {
-                uid: 'mock-user-id-123',
-                email,
-                name: role.charAt(0).toUpperCase() + role.slice(1) + ' User',
-                photoURL: 'https://via.placeholder.com/150',
-                role: role,
-                emailVerified: true,
-            };
-
-            setUser(mockUser);
-            localStorage.setItem('loanlink_user', JSON.stringify(mockUser));
-            localStorage.setItem('token', 'mock-jwt-token');
-
-            toast.success('Login successful! (Mock)');
-            setLoading(false);
-            return { user: mockUser };
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            toast.success('Login successful!');
+            return result;
         } catch (error) {
-            setLoading(false);
-            toast.error('Login failed');
+            toast.error(error.message || 'Login failed');
             throw error;
+        } finally {
+            setLoading(false);
         }
     };
 
     const loginWithGoogle = async () => {
-        return login('google-user@example.com', 'password');
-    };
-
-    const loginWithGithub = async () => {
-        return login('github-user@example.com', 'password');
+        setLoading(true);
+        try {
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            toast.success('Google login successful!');
+            return result;
+        } catch (error) {
+            toast.error(error.message || 'Google login failed');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     };
 
     const logout = async () => {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setUser(null);
-        localStorage.removeItem('loanlink_user');
-        localStorage.removeItem('token');
-        toast.success('Logged out successfully');
+        try {
+            await signOut(auth);
+            toast.success('Logged out successfully');
+        } catch (error) {
+            toast.error('Logout failed');
+            throw error;
+        }
     };
 
     const value = {
@@ -115,7 +123,6 @@ export const AuthProvider = ({ children }) => {
         register,
         login,
         loginWithGoogle,
-        loginWithGithub,
         logout,
     };
 
