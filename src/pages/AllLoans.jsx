@@ -76,8 +76,8 @@ const AllLoans = () => {
                                 key={category.id}
                                 onClick={() => setFilter(category.id)}
                                 className={`px-6 py-2.5 rounded-xl font-medium transition-all duration-300 border-2 ${filter === category.id
-                                        ? "bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/25 scale-105"
-                                        : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-200 dark:hover:border-primary-900"
+                                    ? "bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/25 scale-105"
+                                    : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-200 dark:hover:border-primary-900"
                                     }`}
                             >
                                 {category.label}
