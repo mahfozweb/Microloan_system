@@ -1,191 +1,251 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
-import { FiSave, FiArrowLeft } from "react-icons/fi";
-import { toast } from "react-toastify";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
+import { motion } from "framer-motion";
+import { FiPlus, FiSave, FiInfo, FiTag, FiDollarSign, FiPercent, FiClock, FiLayers } from "react-icons/fi";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const AddLoan = () => {
-  const navigate = useNavigate();
-  const [status, setStatus] = useState(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    minAmount: "",
-    maxAmount: "",
-    interest: "",
-    duration: "",
-    description: "",
-    requirements: "",
-  });
+    const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        title: "",
+        category: "personal",
+        minAmount: "",
+        maxAmount: "",
+        minInterest: "",
+        maxInterest: "",
+        minDuration: "",
+        maxDuration: "",
+        description: "",
+        available: true,
+    });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value,
+        }));
+    };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setStatus("loading");
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
 
-    // Simulating API call
-    setTimeout(() => {
-      setStatus("success");
-      toast.success("New loan product created successfully!");
-      setTimeout(() => navigate("/dashboard/manage-loans"), 1000);
-    }, 1500);
-  };
+        try {
+            // Simulate API call
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            toast.success("New loan type added successfully!");
+            navigate("/dashboard/manage-loans");
+        } catch (error) {
+            toast.error("Failed to add loan. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-  return (
-    <DashboardLayout>
-      <Helmet>
-        <title>Add Loan - Dashboard</title>
-      </Helmet>
+    return (
+        <DashboardLayout>
+            <Helmet>
+                <title>Add New Loan - Manager Dashboard</title>
+            </Helmet>
 
-      <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 mb-2 transition-colors"
-        >
-          <FiArrowLeft className="mr-2" /> Back to List
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Add New Loan
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Create a new loan product
-        </p>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Loan Title
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-              placeholder="e.g. Small Business Growth Fund"
-            />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Min Amount ($)
-              </label>
-              <input
-                type="number"
-                name="minAmount"
-                value={formData.minAmount}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-                placeholder="1000"
-              />
+            <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add New Loan Type</h1>
+                <p className="text-gray-600 dark:text-gray-400">Create a new loan product for borrowers</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Max Amount ($)
-              </label>
-              <input
-                type="number"
-                name="maxAmount"
-                value={formData.maxAmount}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-                placeholder="50000"
-              />
-            </div>
-          </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Interest Rate (%)
-              </label>
-              <input
-                type="text"
-                name="interest"
-                value={formData.interest}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-                placeholder="5-10"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Duration (months)
-              </label>
-              <input
-                type="text"
-                name="duration"
-                value={formData.duration}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-                placeholder="12-36"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              rows="4"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none resize-none text-gray-900 dark:text-white"
-              placeholder="Detailed description of the loan product..."
-            ></textarea>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Requirements (comma separated)
-            </label>
-            <input
-              type="text"
-              name="requirements"
-              value={formData.requirements}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-              placeholder="Valid ID, Bank Statement, Income Proof"
-            />
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
             >
-              {status === "loading" ? (
-                <span className="animate-pulse">Saving...</span>
-              ) : status === "success" ? (
-                <span className="text-green-200">Loan Created!</span>
-              ) : (
-                <>
-                  <FiSave /> Save Loan Product
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </DashboardLayout>
-  );
+                <form onSubmit={handleSubmit} className="p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Title and Category */}
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <FiTag className="text-primary-500" /> Loan Title
+                                </label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    required
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                    placeholder="e.g. Small Business Growth Loan"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <FiLayers className="text-primary-500" /> Category
+                                </label>
+                                <select
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                >
+                                    <option value="personal">Personal</option>
+                                    <option value="business">Business</option>
+                                    <option value="education">Education</option>
+                                    <option value="emergency">Emergency</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <FiInfo className="text-primary-500" /> Description
+                            </label>
+                            <textarea
+                                name="description"
+                                required
+                                rows="5"
+                                value={formData.description}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
+                                placeholder="Describe the loan features and benefits..."
+                            ></textarea>
+                        </div>
+
+                        {/* Amounts */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <FiDollarSign className="text-primary-500" /> Loan Amount Range ($)
+                            </label>
+                            <div className="flex items-center gap-4">
+                                <input
+                                    type="number"
+                                    name="minAmount"
+                                    required
+                                    placeholder="Min"
+                                    value={formData.minAmount}
+                                    onChange={handleChange}
+                                    className="w-1/2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                />
+                                <span className="text-gray-400">to</span>
+                                <input
+                                    type="number"
+                                    name="maxAmount"
+                                    required
+                                    placeholder="Max"
+                                    value={formData.maxAmount}
+                                    onChange={handleChange}
+                                    className="w-1/2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Interest */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <FiPercent className="text-primary-500" /> Interest Rate Range (%)
+                            </label>
+                            <div className="flex items-center gap-4">
+                                <input
+                                    type="number"
+                                    name="minInterest"
+                                    required
+                                    placeholder="Min"
+                                    step="0.01"
+                                    value={formData.minInterest}
+                                    onChange={handleChange}
+                                    className="w-1/2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                />
+                                <span className="text-gray-400">to</span>
+                                <input
+                                    type="number"
+                                    name="maxInterest"
+                                    required
+                                    placeholder="Max"
+                                    step="0.01"
+                                    value={formData.maxInterest}
+                                    onChange={handleChange}
+                                    className="w-1/2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Duration */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <FiClock className="text-primary-500" /> Duration Range (Months)
+                            </label>
+                            <div className="flex items-center gap-4">
+                                <input
+                                    type="number"
+                                    name="minDuration"
+                                    required
+                                    placeholder="Min"
+                                    value={formData.minDuration}
+                                    onChange={handleChange}
+                                    className="w-1/2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                />
+                                <span className="text-gray-400">to</span>
+                                <input
+                                    type="number"
+                                    name="maxDuration"
+                                    required
+                                    placeholder="Max"
+                                    value={formData.maxDuration}
+                                    onChange={handleChange}
+                                    className="w-1/2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Availability */}
+                        <div className="flex items-center gap-3 md:mt-8">
+                            <input
+                                type="checkbox"
+                                name="available"
+                                id="available"
+                                checked={formData.available}
+                                onChange={handleChange}
+                                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 cursor-pointer"
+                            />
+                            <label htmlFor="available" className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+                                Active & Available for Applications
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="mt-12 flex justify-end gap-4 border-t border-gray-100 dark:border-gray-700 pt-8">
+                        <button
+                            type="button"
+                            onClick={() => navigate("/dashboard/manage-loans")}
+                            className="px-6 py-3 text-gray-600 dark:text-gray-400 font-semibold hover:text-gray-900 dark:hover:text-white transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg shadow-primary-600/20 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <FiSave /> Create Loan Type
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </motion.div>
+        </DashboardLayout>
+    );
 };
 
 export default AddLoan;

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { FiSave, FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 import { loans } from "../../../data/loans";
 
@@ -52,8 +53,14 @@ const EditLoan = () => {
     // Simulating API call
     setTimeout(() => {
       setStatus("success");
-      toast.success("Loan product updated successfully!");
-      setTimeout(() => navigate("/dashboard/manage-loans"), 1000);
+      Swal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Loan product has been updated successfully.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      setTimeout(() => navigate("/dashboard/manage-loans"), 2000);
     }, 1500);
   };
 

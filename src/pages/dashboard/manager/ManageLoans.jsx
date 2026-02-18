@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 import { loans as initialLoans } from "../../../data/loans";
 
@@ -15,10 +16,20 @@ const ManageLoans = () => {
   };
 
   const handleDelete = (id, title) => {
-    if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
-      setLoanList((prev) => prev.filter((loan) => loan.id !== id));
-      toast.success(`"${title}" has been deleted successfully.`);
-    }
+    Swal.fire({
+      title: 'Are you sure?',
+      text: `You are about to delete the loan listing "${title}". This action is permanent!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#0284c7',
+      confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setLoanList((prev) => prev.filter((loan) => loan.id !== id));
+        Swal.fire('Deleted!', `"${title}" has been deleted.`, 'success');
+      }
+    });
   };
 
   return (
@@ -53,7 +64,7 @@ const ManageLoans = () => {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Title
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider" style={{ minWidth: '150px' }}>
                   Amount Range
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -74,11 +85,11 @@ const ManageLoans = () => {
                     key={loan.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="font-medium text-gray-900 dark:text-white">
                         {loan.title}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block truncate max-w-[150px]">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block truncate max-w-[200px]">
                         {loan.description}
                       </div>
                     </td>

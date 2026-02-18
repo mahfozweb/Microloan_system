@@ -153,6 +153,7 @@ const Register = () => {
                                 >
                                     <option value="borrower">Borrower</option>
                                     <option value="manager">Manager</option>
+                                    <option value="admin">Admin</option>
                                 </select>
                             </div>
 
