@@ -1,40 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FiCheckCircle, FiXCircle, FiUser, FiEye } from 'react-icons/fi';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import api from '../../../services/api';
+import LoadingSpinner from '../../../components/shared/LoadingSpinner';
 
 const PendingLoans = () => {
-    // Mock application data with state
-    const [applications, setApplications] = useState([
-        {
-            id: 'APP-001',
-            applicant: 'John Doe',
-            loanTitle: 'Business Expansion Loan',
-            amount: 15000,
-            date: '2023-11-20',
-            status: 'Pending',
-        },
-        {
-            id: 'APP-003',
-            applicant: 'Michael Brown',
-            loanTitle: 'Home Renovation',
-            amount: 8000,
-            date: '2023-11-22',
-            status: 'Pending',
-        },
-        {
-            id: 'APP-005',
-            applicant: 'Sarah Wilson',
-            loanTitle: 'Education Loan',
-            amount: 5000,
-            date: '2023-11-25',
-            status: 'Pending',
-        },
-    ]);
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleAction = (id, applicant, action) => {
+    const fetchPending = async () => {
+        try {
+            const response = await api.get('/applications?status=pending');
+            setApplications(response.data);
+        } catch (error) {
+            console.error("Error fetching pending applications:", error);
+            toast.error("Failed to load pending applications");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPending();
+    }, []);
+
+    const handleAction = (id, applicant, action, appData) => {
         if (action === 'Approve') {
             Swal.fire({
                 title: 'Confirm Approval',
@@ -44,10 +37,15 @@ const PendingLoans = () => {
                 confirmButtonColor: '#10b981',
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Yes, Approve'
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    setApplications(prev => prev.filter(app => app.id !== id));
-                    Swal.fire('Approved!', `Loan for ${applicant} has been approved.`, 'success');
+                    try {
+                        await api.patch(`/applications/status/${id}`, { status: 'approved' });
+                        setApplications(prev => prev.filter(app => app._id !== id));
+                        Swal.fire('Approved!', `Loan for ${applicant} has been approved.`, 'success');
+                    } catch (error) {
+                        Swal.fire('Error', 'Failed to approve application', 'error');
+                    }
                 }
             });
         } else if (action === 'Reject') {
@@ -59,30 +57,38 @@ const PendingLoans = () => {
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#6b7280',
                 confirmButtonText: 'Yes, Reject'
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    setApplications(prev => prev.filter(app => app.id !== id));
-                    Swal.fire('Rejected!', `Loan for ${applicant} has been rejected.`, 'error');
+                    try {
+                        await api.patch(`/applications/status/${id}`, { status: 'rejected' });
+                        setApplications(prev => prev.filter(app => app._id !== id));
+                        Swal.fire('Rejected!', `Loan for ${applicant} has been rejected.`, 'error');
+                    } catch (error) {
+                        Swal.fire('Error', 'Failed to reject application', 'error');
+                    }
                 }
             });
         } else {
-            const app = applications.find(a => a.id === id);
+            // View details
             Swal.fire({
                 title: 'Application Details',
                 html: `
                     <div class="text-left space-y-2">
-                        <p><strong>ID:</strong> ${app.id}</p>
-                        <p><strong>Applicant:</strong> ${app.applicant}</p>
-                        <p><strong>Loan:</strong> ${app.loanTitle}</p>
-                        <p><strong>Amount:</strong> $${app.amount.toLocaleString()}</p>
-                        <p><strong>Applied Date:</strong> ${app.date}</p>
-                        <p><strong>Status:</strong> ${app.status}</p>
+                        <p><strong>ID:</strong> ${appData._id}</p>
+                        <p><strong>Applicant:</strong> ${appData.fullName}</p>
+                        <p><strong>Email:</strong> ${appData.email}</p>
+                        <p><strong>Loan:</strong> ${appData.loanTitle}</p>
+                        <p><strong>Amount:</strong> $${Number(appData.loanAmount).toLocaleString()}</p>
+                        <p><strong>Address:</strong> ${appData.address || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${appData.status}</p>
                     </div>
                 `,
                 confirmButtonColor: '#0284c7'
             });
         }
     };
+
+    if (loading) return <DashboardLayout><LoadingSpinner /></DashboardLayout>;
 
     return (
         <DashboardLayout>
@@ -100,7 +106,6 @@ const PendingLoans = () => {
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-700/50">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Application ID</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Applicant</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Loan Details</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
@@ -110,17 +115,15 @@ const PendingLoans = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {applications.length > 0 ? applications.map((app) => (
-                                <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                        {app.id}
-                                    </td>
+                                <tr key={app._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400">
                                                 <FiUser />
                                             </div>
                                             <div className="ml-3">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{app.applicant}</div>
+                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{app.fullName}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">{app.email}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -128,29 +131,29 @@ const PendingLoans = () => {
                                         {app.loanTitle}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
-                                        ${app.amount.toLocaleString()}
+                                        ${Number(app.loanAmount).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {app.date}
+                                        {app.appliedDate ? new Date(app.appliedDate).toLocaleDateString() : 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end space-x-2">
                                             <button
-                                                onClick={() => handleAction(app.id, app.applicant, 'View')}
+                                                onClick={() => handleAction(app._id, app.fullName, 'View', app)}
                                                 className="p-2 text-gray-500 hover:text-primary-600 bg-gray-100 hover:bg-primary-50 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-primary-900/40 rounded-lg transition-all"
                                                 title="View Details"
                                             >
                                                 <FiEye className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleAction(app.id, app.applicant, 'Approve')}
+                                                onClick={() => handleAction(app._id, app.fullName, 'Approve', app)}
                                                 className="p-2 text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 rounded-lg transition-all"
                                                 title="Approve"
                                             >
                                                 <FiCheckCircle className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleAction(app.id, app.applicant, 'Reject')}
+                                                onClick={() => handleAction(app._id, app.fullName, 'Reject', app)}
                                                 className="p-2 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-all"
                                                 title="Reject"
                                             >
@@ -161,7 +164,7 @@ const PendingLoans = () => {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                         No pending applications found.
                                     </td>
                                 </tr>

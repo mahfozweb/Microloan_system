@@ -5,15 +5,17 @@ import { motion } from "framer-motion";
 import { FiArrowLeft, FiSend, FiInfo, FiFileText, FiUser, FiMail, FiPhone, FiBriefcase, FiDollarSign } from "react-icons/fi";
 import { toast } from "react-toastify";
 import { useAuth } from "../contexts/AuthContext";
-import { loans } from "../data/loans";
+import api from "../services/api";
+import { getLoanVisuals } from "../utils/loanVisuals";
+import LoadingSpinner from "../components/shared/LoadingSpinner";
 
 const ApplyLoan = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [loan, setLoan] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const loan = loans.find((l) => l.id === parseInt(id));
 
     const [formData, setFormData] = useState({
         fullName: user?.name || "",
@@ -27,13 +29,35 @@ const ApplyLoan = () => {
     });
 
     useEffect(() => {
-        if (!loan) {
-            toast.error("Loan not found");
-            navigate("/loans");
-        }
-    }, [loan, navigate]);
+        const fetchLoan = async () => {
+            try {
+                const response = await api.get(`/loans/${id}`);
+                setLoan(response.data);
+            } catch (error) {
+                console.error("Error fetching loan details:", error);
+                toast.error("Loan not found");
+                navigate("/loans");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLoan();
+    }, [id, navigate]);
 
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                fullName: user.name || "",
+                email: user.email || ""
+            }));
+        }
+    }, [user]);
+
+    if (loading) return <LoadingSpinner />;
     if (!loan) return null;
+
+    const visuals = getLoanVisuals(loan.category);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -44,13 +68,22 @@ const ApplyLoan = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // Simulate API call
         try {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await api.post('/applications', {
+                ...formData,
+                loanId: loan._id,
+                loanTitle: loan.title,
+                interest: loan.interest,
+                duration: loan.duration,
+                category: loan.category,
+                status: 'pending',
+                appliedDate: new Date().toISOString()
+            });
+
             toast.success("Loan application submitted successfully!");
             navigate("/dashboard");
         } catch (error) {
-            toast.error("Failed to submit application. Please try again.");
+            toast.error(error.response?.data?.message || "Failed to submit application. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -78,17 +111,17 @@ const ApplyLoan = () => {
                         className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700"
                     >
                         {/* Header */}
-                        <div className={`p-8 ${loan.color} border-b ${loan.borderColor}`}>
+                        <div className={`p-8 ${visuals.color} border-b ${visuals.borderColor}`}>
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-                                    {loan.icon}
+                                    {visuals.icon}
                                 </div>
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                                         Application: {loan.title}
                                     </h1>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Range: {loan.amount} | Interest: {loan.interest}
+                                        Max: {loan.amount} | Interest: {loan.interest}
                                     </p>
                                 </div>
                             </div>
@@ -122,9 +155,9 @@ const ApplyLoan = () => {
                                         type="email"
                                         name="email"
                                         required
+                                        readOnly
                                         value={formData.email}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 transition-all outline-none"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-500 cursor-not-allowed outline-none"
                                         placeholder="your@email.com"
                                     />
                                 </div>
@@ -189,7 +222,7 @@ const ApplyLoan = () => {
                                         value={formData.loanAmount}
                                         onChange={handleChange}
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 transition-all outline-none"
-                                        placeholder={`e.g. 2000 (Range: ${loan.amount})`}
+                                        placeholder={`e.g. 2000 (Max: ${loan.amount})`}
                                     />
                                 </div>
                             </div>
@@ -244,8 +277,8 @@ const ApplyLoan = () => {
                                     type="submit"
                                     disabled={isSubmitting}
                                     className={`w-full py-4 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${isSubmitting
-                                            ? "bg-gray-400 cursor-not-allowed"
-                                            : "bg-primary-600 hover:bg-primary-700 shadow-primary-600/20 active:scale-[0.98]"
+                                        ? "bg-gray-400 cursor-not-allowed"
+                                        : "bg-primary-600 hover:bg-primary-700 shadow-primary-600/20 active:scale-[0.98]"
                                         }`}
                                 >
                                     {isSubmitting ? (

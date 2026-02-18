@@ -5,12 +5,14 @@ import { FiSave, FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
-import { loans } from "../../../data/loans";
+import api from "../../../services/api";
+import LoadingSpinner from "../../../components/shared/LoadingSpinner";
 
 const EditLoan = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
     minAmount: "",
@@ -22,23 +24,38 @@ const EditLoan = () => {
   });
 
   useEffect(() => {
-    const loan = loans.find((l) => l.id === parseInt(id));
-    if (loan) {
-      // Extract numbers from strings like "$500 - $5,000"
-      const amounts = loan.amount.replace(/\$|,/g, "").split(" - ");
-      setFormData({
-        title: loan.title,
-        minAmount: amounts[0] || "",
-        maxAmount: amounts[1] || "",
-        interest: loan.interest,
-        duration: loan.duration,
-        description: loan.description,
-        requirements: "Valid ID, Bank Statement, Income Proof", // Placeholder as it's not in the static data
-      });
-    } else {
-      toast.error("Loan product not found");
-      navigate("/dashboard/manage-loans");
-    }
+    const fetchLoan = async () => {
+      try {
+        const response = await api.get(`/loans/${id}`);
+        const loan = response.data;
+        if (loan) {
+          // Extract numbers from strings like "$500 - $5,000"
+          const amounts = loan.amount ? loan.amount.replace(/\$|,/g, "").split(" - ") : ["", ""];
+          setFormData({
+            title: loan.title || "",
+            minAmount: amounts[0]?.trim() || "",
+            maxAmount: amounts[1]?.trim() || "",
+            interest: loan.interest || "",
+            duration: loan.duration || "",
+            description: loan.description || "",
+            requirements: Array.isArray(loan.requirements)
+              ? loan.requirements.join(", ")
+              : loan.requirements || "Valid ID, Bank Statement, Income Proof",
+          });
+        } else {
+          toast.error("Loan product not found");
+          navigate("/dashboard/manage-loans");
+        }
+      } catch (error) {
+        console.error("Error fetching loan:", error);
+        toast.error("Loan product not found");
+        navigate("/dashboard/manage-loans");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLoan();
   }, [id, navigate]);
 
   const handleChange = (e) => {
@@ -46,23 +63,35 @@ const EditLoan = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");
 
-    // Simulating API call
-    setTimeout(() => {
+    const loanPayload = {
+      ...formData,
+      amount: `$${Number(formData.minAmount).toLocaleString()} - $${Number(formData.maxAmount).toLocaleString()}`,
+      requirements: formData.requirements.split(",").map((r) => r.trim()),
+    };
+
+    try {
+      await api.put(`/loans/${id}`, loanPayload);
       setStatus("success");
       Swal.fire({
-        icon: 'success',
-        title: 'Updated!',
-        text: 'Loan product has been updated successfully.',
+        icon: "success",
+        title: "Updated!",
+        text: "Loan product has been updated successfully.",
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
       setTimeout(() => navigate("/dashboard/manage-loans"), 2000);
-    }, 1500);
+    } catch (error) {
+      console.error("Error updating loan:", error);
+      setStatus(null);
+      toast.error(error.response?.data?.message || "Failed to update loan.");
+    }
   };
+
+  if (loading) return <DashboardLayout><LoadingSpinner /></DashboardLayout>;
 
   return (
     <DashboardLayout>
@@ -147,7 +176,7 @@ const EditLoan = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-                placeholder="5-10"
+                placeholder="5-10%"
               />
             </div>
             <div>
@@ -161,7 +190,7 @@ const EditLoan = () => {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
-                placeholder="12-36"
+                placeholder="12-36 months"
               />
             </div>
           </div>

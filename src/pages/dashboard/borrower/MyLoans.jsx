@@ -1,39 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
-import { FiFileText, FiClock, FiCheckCircle, FiXCircle, FiTrendingUp } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { FiFileText, FiClock, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
+import api from '../../../services/api';
+import { useAuth } from '../../../contexts/AuthContext';
+import LoadingSpinner from '../../../components/shared/LoadingSpinner';
 
 const MyLoans = () => {
-    // Mock user loans
-    const [myApplications] = useState([
-        {
-            id: 'APP-1024',
-            title: 'Personal Loan',
-            amount: 5000,
-            date: '2023-11-15',
-            status: 'Processing',
-            stage: 'Credit Review',
-            color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20'
-        },
-        {
-            id: 'APP-0988',
-            title: 'Education Loan',
-            amount: 12000,
-            date: '2023-10-20',
-            status: 'Approved',
-            stage: 'Disbursed',
-            color: 'text-green-500 bg-green-50 dark:bg-green-900/20'
+    const { user } = useAuth();
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchMyLoans = async () => {
+            try {
+                // The backend handles the filtering by user email from the token
+                const response = await api.get('/applications?role=borrower');
+                setApplications(response.data);
+            } catch (error) {
+                console.error("Error fetching my loans:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (user) {
+            fetchMyLoans();
         }
-    ]);
+    }, [user]);
 
     const getStatusColor = (status) => {
-        switch (status) {
-            case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-            case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-            default: return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+        switch (status?.toLowerCase()) {
+            case 'approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+            case 'rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            case 'pending': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+            default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400';
         }
     };
+
+    const stats = {
+        total: applications.length,
+        processing: applications.filter(a => a.status === 'pending').length,
+        active: applications.filter(a => a.status === 'approved').length
+    };
+
+    if (loading) return <DashboardLayout><LoadingSpinner /></DashboardLayout>;
 
     return (
         <DashboardLayout>
@@ -54,7 +65,7 @@ const MyLoans = () => {
                         </div>
                         <span className="text-sm text-gray-500 dark:text-gray-400">Total Applications</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{myApplications.length}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-4 mb-2">
@@ -63,16 +74,16 @@ const MyLoans = () => {
                         </div>
                         <span className="text-sm text-gray-500 dark:text-gray-400">Processing</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">1</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.processing}</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-4 mb-2">
                         <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
                             <FiCheckCircle className="text-green-600 w-6 h-6" />
                         </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">Active Loans</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Approved Loans</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">1</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</p>
                 </div>
             </div>
 
@@ -89,38 +100,44 @@ const MyLoans = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {myApplications.map((app) => (
-                                <tr key={app.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            {applications.length > 0 ? applications.map((app) => (
+                                <tr key={app._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${app.color}`}>
+                                            <div className="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-500">
                                                 <FiTrendingUp className="w-4 h-4" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{app.title}</p>
-                                                <p className="text-xs text-gray-400">{app.id}</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white">{app.loanTitle}</p>
+                                                <p className="text-xs text-gray-400">{app._id}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
-                                        ${app.amount.toLocaleString()}
+                                        ${Number(app.loanAmount).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {app.date}
+                                        {app.appliedDate ? new Date(app.appliedDate).toLocaleDateString() : 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(app.status)}`}>
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(app.status)}`}>
                                             {app.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></div>
-                                            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{app.stage}</span>
+                                            <div className={`w-2 h-2 rounded-full ${app.status === 'pending' ? 'bg-primary-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{app.stage || 'Pending Review'}</span>
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                        <p>You haven't applied for any loans yet.</p>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -1,14 +1,33 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { FiArrowLeft, FiCheck, FiInfo } from "react-icons/fi";
-import { loans } from "../data/loans";
+import api from "../services/api";
+import { getLoanVisuals } from "../utils/loanVisuals";
+import LoadingSpinner from "../components/shared/LoadingSpinner";
 
 const LoanDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [loan, setLoan] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const loan = loans.find((l) => l.id === parseInt(id));
+  useEffect(() => {
+    const fetchLoan = async () => {
+      try {
+        const response = await api.get(`/loans/${id}`);
+        setLoan(response.data);
+      } catch (error) {
+        console.error("Error fetching loan details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLoan();
+  }, [id]);
+
+  if (loading) return <LoadingSpinner />;
 
   if (!loan) {
     return (
@@ -27,6 +46,8 @@ const LoanDetails = () => {
       </div>
     );
   }
+
+  const visuals = getLoanVisuals(loan.category);
 
   return (
     <>
@@ -52,27 +73,21 @@ const LoanDetails = () => {
           >
             {/* Header */}
             <div
-              className={`p-8 md:p-12 ${loan.color} border-b ${loan.borderColor}`}
+              className={`p-8 md:p-12 ${visuals.color} border-b ${visuals.borderColor}`}
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-6">
                   <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-                    {loan.icon}
+                    {visuals.icon}
                   </div>
                   <div>
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
                       {loan.title}
                     </h1>
                     <div className="flex items-center gap-2">
-                      {loan.available ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                          Available Now
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                          Unavailable
-                        </span>
-                      )}
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                        Available Now
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -184,19 +199,10 @@ const LoanDetails = () => {
                   </div>
 
                   <button
-                    onClick={() =>
-                      loan.available && navigate(`/apply-loan/${loan.id}`)
-                    }
-                    disabled={!loan.available}
-                    className={`w-full py-4 text-white font-bold rounded-xl transition-all shadow-lg ${
-                      loan.available
-                        ? "bg-primary-600 hover:bg-primary-700 shadow-primary-600/20 active:scale-95"
-                        : "bg-gray-400 cursor-not-allowed shadow-none"
-                    }`}
+                    onClick={() => navigate(`/apply-loan/${loan._id}`)}
+                    className="w-full py-4 text-white font-bold rounded-xl transition-all shadow-lg bg-primary-600 hover:bg-primary-700 shadow-primary-600/20 active:scale-95"
                   >
-                    {loan.available
-                      ? "Proceed to Apply"
-                      : "Currently Unavailable"}
+                    Proceed to Apply
                   </button>
                   <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-4 flex items-center justify-center">
                     <FiInfo className="mr-1" /> Terms and conditions apply

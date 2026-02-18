@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 import { motion } from "framer-motion";
-import { FiPlus, FiSave, FiInfo, FiTag, FiDollarSign, FiPercent, FiClock, FiLayers } from "react-icons/fi";
+import { FiSave, FiInfo, FiTag, FiDollarSign, FiPercent, FiClock, FiLayers } from "react-icons/fi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import api from "../../../services/api";
 
 const AddLoan = () => {
     const navigate = useNavigate();
@@ -34,13 +35,21 @@ const AddLoan = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
+        // Build formatted strings for amount, interest, duration
+        const loanPayload = {
+            ...formData,
+            amount: `$${Number(formData.minAmount).toLocaleString()} - $${Number(formData.maxAmount).toLocaleString()}`,
+            interest: `${formData.minInterest}% - ${formData.maxInterest}%`,
+            duration: `${formData.minDuration} - ${formData.maxDuration} months`,
+        };
+
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            await api.post("/loans", loanPayload);
             toast.success("New loan type added successfully!");
             navigate("/dashboard/manage-loans");
         } catch (error) {
-            toast.error("Failed to add loan. Please try again.");
+            console.error("Error adding loan:", error);
+            toast.error(error.response?.data?.message || "Failed to add loan. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

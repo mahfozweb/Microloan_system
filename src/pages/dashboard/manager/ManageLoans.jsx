@@ -1,15 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
-import { loans as initialLoans } from "../../../data/loans";
+import api from "../../../services/api";
+import LoadingSpinner from "../../../components/shared/LoadingSpinner";
 
 const ManageLoans = () => {
-  const [loanList, setLoanList] = useState(initialLoans);
+  const [loanList, setLoanList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const fetchLoans = async () => {
+    try {
+      const response = await api.get("/loans");
+      setLoanList(response.data);
+    } catch (error) {
+      console.error("Error fetching loans:", error);
+      toast.error("Failed to load loans");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLoans();
+  }, []);
 
   const handleEdit = (id) => {
     navigate(`/dashboard/edit-loan/${id}`);
@@ -24,13 +42,20 @@ const ManageLoans = () => {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#0284c7',
       confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setLoanList((prev) => prev.filter((loan) => loan.id !== id));
-        Swal.fire('Deleted!', `"${title}" has been deleted.`, 'success');
+        try {
+          await api.delete(`/loans/${id}`);
+          setLoanList((prev) => prev.filter((loan) => loan._id !== id));
+          Swal.fire('Deleted!', `"${title}" has been deleted.`, 'success');
+        } catch (error) {
+          Swal.fire('Error', 'Failed to delete loan', 'error');
+        }
       }
     });
   };
+
+  if (loading) return <DashboardLayout><LoadingSpinner /></DashboardLayout>;
 
   return (
     <DashboardLayout>
@@ -82,7 +107,7 @@ const ManageLoans = () => {
               {loanList.length > 0 ? (
                 loanList.map((loan) => (
                   <tr
-                    key={loan.id}
+                    key={loan._id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <td className="px-6 py-4">
@@ -104,14 +129,14 @@ const ManageLoans = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
-                        onClick={() => handleEdit(loan.id)}
+                        onClick={() => handleEdit(loan._id)}
                         className="text-primary-600 hover:text-primary-900 dark:hover:text-primary-400 mr-4 transition-colors p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg"
                         title="Edit Loan"
                       >
                         <FiEdit2 className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(loan.id, loan.title)}
+                        onClick={() => handleDelete(loan._id, loan.title)}
                         className="text-red-600 hover:text-red-900 dark:hover:text-red-400 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
                         title="Delete Loan"
                       >
