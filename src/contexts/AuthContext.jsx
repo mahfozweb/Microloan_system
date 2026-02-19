@@ -42,8 +42,10 @@ export const AuthProvider = ({ children }) => {
             }
 
             // Get user role/status from DB
-            const response = await api.get(`/user/role/${currentUser.email}`);
+            const userEmail = currentUser.email?.trim().toLowerCase();
+            const response = await api.get(`/user/role/${encodeURIComponent(userEmail)}`);
             const dbUser = response.data;
+            console.log("Fetched DB User for", userEmail, ":", dbUser);
 
             const isNewRegistration = registrationRole !== null;
 
