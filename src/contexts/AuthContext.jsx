@@ -45,13 +45,17 @@ export const AuthProvider = ({ children }) => {
             const response = await api.get(`/user/role/${currentUser.email}`);
             const dbUser = response.data;
 
+            const isNewRegistration = registrationRole !== null;
+
             if (dbUser && dbUser.role) {
                 setUser({
                     uid: currentUser.uid,
                     email: currentUser.email,
                     name: currentUser.displayName,
                     photoURL: currentUser.photoURL,
-                    role: registrationRole || dbUser.role,
+                    // If it's a new registration, prioritize the picked role.
+                    // Otherwise, use the role stored in the database.
+                    role: isNewRegistration ? registrationRole : dbUser.role,
                     status: dbUser.status || 'active'
                 });
             } else {
@@ -177,7 +181,7 @@ export const AuthProvider = ({ children }) => {
                     name: result.user.displayName,
                     email: result.user.email,
                     photoURL: result.user.photoURL,
-                    role: 'borrower'
+                    // Role is handled by backend $setOnInsert
                 });
             } catch (dbErr) {
                 console.error('Failed to save Google user to DB:', dbErr);
