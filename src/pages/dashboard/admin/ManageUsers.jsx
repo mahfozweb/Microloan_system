@@ -39,7 +39,7 @@ const ManageUsers = () => {
         const newStatus = user.status === 'active' ? 'blocked' : 'active';
 
         try {
-            await api.patch(`/users/status/${user.email}`, { status: newStatus });
+            await api.patch(`/users/role/${user._id}`, { status: newStatus });
             setUsers(users.map(u => u._id === user._id ? { ...u, status: newStatus } : u));
             toast.success(`User ${newStatus === 'active' ? 'unblocked' : 'blocked'} successfully`);
         } catch (error) {
@@ -67,7 +67,7 @@ const ManageUsers = () => {
             if (result.isConfirmed) {
                 const role = result.value;
                 try {
-                    await api.patch(`/users/role/${user.email}`, { role });
+                    await api.patch(`/users/role/${user._id}`, { role });
                     setUsers(users.map(u => u._id === user._id ? { ...u, role } : u));
                     Swal.fire('Updated!', 'User role has been updated.', 'success');
                 } catch (error) {
