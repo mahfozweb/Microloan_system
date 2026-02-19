@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
                     email: currentUser.email,
                     name: currentUser.displayName,
                     photoURL: currentUser.photoURL,
-                    role: dbUser.role,
+                    role: registrationRole || dbUser.role,
                     status: dbUser.status || 'active'
                 });
             } else {
