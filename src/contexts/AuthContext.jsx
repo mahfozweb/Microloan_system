@@ -31,17 +31,22 @@ export const AuthProvider = ({ children }) => {
 
     const syncUserFromDB = async (currentUser, registrationRole = null) => {
         try {
-            // Get JWT cookie from backend
-            const jwtResponse = await api.post('/jwt', {
-                email: currentUser.email,
-                name: currentUser.displayName,
-            });
+            // 1. Get JWT (this might fail if backend secret is missing)
+            try {
+                const jwtResponse = await api.post('/jwt', {
+                    email: currentUser.email,
+                    name: currentUser.displayName,
+                });
 
-            if (jwtResponse.data?.token) {
-                localStorage.setItem('token', jwtResponse.data.token);
+                if (jwtResponse.data?.token) {
+                    localStorage.setItem('token', jwtResponse.data.token);
+                }
+            } catch (jwtError) {
+                console.error("JWT Error:", jwtError.response?.data?.message || jwtError.message);
+                toast.warn("Secure session failed. Some features might not work.");
             }
 
-            // Get user role/status from DB
+            // 2. Get user role/status from DB (unprotected route)
             const userEmail = currentUser.email?.trim().toLowerCase();
             const response = await api.get(`/user/role/${encodeURIComponent(userEmail)}`);
             const dbUser = response.data;
@@ -55,13 +60,10 @@ export const AuthProvider = ({ children }) => {
                     email: currentUser.email,
                     name: currentUser.displayName,
                     photoURL: currentUser.photoURL,
-                    // If it's a new registration, prioritize the picked role.
-                    // Otherwise, use the role stored in the database.
                     role: isNewRegistration ? registrationRole : dbUser.role,
                     status: dbUser.status || 'active'
                 });
             } else {
-                // If user not in DB, fallback to registration role or borrower
                 console.warn("User role not found in database for:", currentUser.email);
                 setUser({
                     uid: currentUser.uid,
@@ -75,11 +77,8 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error("Auth sync error:", error.message);
 
-            // If it's a 404, the user might just be new/not synced yet
-            const isNotFoundError = error.response?.status === 404;
-
-            if (!isNotFoundError) {
-                toast.error("Connecting to server failed. Role-based features may be limited.");
+            if (error.response?.status !== 404) {
+                toast.error("Couldn't sync account details with server.");
             }
 
             setUser({
