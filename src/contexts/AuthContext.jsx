@@ -32,10 +32,14 @@ export const AuthProvider = ({ children }) => {
     const syncUserFromDB = async (currentUser, registrationRole = null) => {
         try {
             // Get JWT cookie from backend
-            await api.post('/jwt', {
+            const jwtResponse = await api.post('/jwt', {
                 email: currentUser.email,
                 name: currentUser.displayName,
             });
+
+            if (jwtResponse.data?.token) {
+                localStorage.setItem('token', jwtResponse.data.token);
+            }
 
             // Get user role/status from DB
             const response = await api.get(`/user/role/${currentUser.email}`);
@@ -192,6 +196,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await signOut(auth);
+            localStorage.removeItem('token');
             // Attempt backend logout, but don't block if it fails (e.g. server down)
             try {
                 await api.post('/logout');
