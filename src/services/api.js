@@ -16,6 +16,14 @@ api.interceptors.request.use(
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            // Remove console logs in production if needed, but helpful for debugging now
+            if (import.meta.env.DEV) {
+                console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url} - Token attached`);
+            }
+        } else {
+            if (import.meta.env.DEV) {
+                console.warn(`[API Request] ${config.method?.toUpperCase()} ${config.url} - NO TOKEN FOUND in localStorage`);
+            }
         }
         return config;
     },
@@ -23,6 +31,7 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
 
 // Response interceptor
 api.interceptors.response.use(
