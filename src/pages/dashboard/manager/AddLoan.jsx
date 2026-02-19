@@ -2,14 +2,17 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 import { motion } from "framer-motion";
-import { FiSave, FiInfo, FiTag, FiDollarSign, FiPercent, FiClock, FiLayers } from "react-icons/fi";
+import { FiSave, FiInfo, FiTag, FiDollarSign, FiPercent, FiClock, FiLayers, FiImage, FiUpload, FiX } from "react-icons/fi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import api from "../../../services/api";
+import axios from "axios";
 
 const AddLoan = () => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [imagePreview, setImagePreview] = useState(null);
     const [formData, setFormData] = useState({
         title: "",
         category: "personal",
@@ -21,6 +24,7 @@ const AddLoan = () => {
         maxDuration: "",
         description: "",
         available: true,
+        image: "",
     });
 
     const handleChange = (e) => {
@@ -31,8 +35,60 @@ const AddLoan = () => {
         }));
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+
+        setIsUploading(true);
+        const imageFormData = new FormData();
+        imageFormData.append("image", file);
+
+        try {
+            // Updated API key - Please ensure this is valid. 
+            // Better practice is to provide this via .env.local as VITE_IMGBB_API_KEY
+            const apiKey = import.meta.env.VITE_IMGBB_API_KEY || "eb75e80fc60cdfd8119ae0f2b37ecc76";
+            const response = await axios.post(
+                `https://api.imgbb.com/1/upload?key=${apiKey}`,
+                imageFormData
+            );
+
+            if (response.data.success) {
+                setFormData((prev) => ({
+                    ...prev,
+                    image: response.data.data.url,
+                }));
+                toast.success("Image uploaded successfully!");
+            }
+        } catch (error) {
+            console.error("Image upload error:", error);
+            const errorMessage = error.response?.data?.error?.message || "Failed to upload image.";
+            toast.error(`${errorMessage} (API Key might be invalid)`);
+            setImagePreview(null);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const removeImage = () => {
+        setImagePreview(null);
+        setFormData((prev) => ({ ...prev, image: "" }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!formData.image) {
+            toast.error("Please upload a loan image.");
+            return;
+        }
+
         setIsSubmitting(true);
 
         // Build formatted strings for amount, interest, duration
@@ -122,6 +178,66 @@ const AddLoan = () => {
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
                                 placeholder="Describe the loan features and benefits..."
                             ></textarea>
+                        </div>
+
+                        {/* Image Upload */}
+                        <div className="md:col-span-2 space-y-4">
+                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <FiImage className="text-primary-500" /> Loan Representative Image
+                            </label>
+
+                            <div className="flex flex-col md:flex-row gap-6 items-start">
+                                {/* Upload Zone */}
+                                <div className="relative w-full md:w-64 h-40 group">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                        disabled={isUploading}
+                                    />
+                                    <div className={`w-full h-full border-2 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all ${isUploading
+                                        ? "border-primary-400 bg-primary-50/10"
+                                        : "border-gray-200 dark:border-gray-700 hover:border-primary-400 hover:bg-primary-50/5 dark:hover:bg-primary-900/10"
+                                        }`}>
+                                        {isUploading ? (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                                                <span className="text-xs font-semibold text-primary-500">Uploading...</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                                    <FiUpload className="text-primary-600 dark:text-primary-400" />
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click or Drag to Upload</span>
+                                                <span className="text-[10px] text-gray-400 mt-1">PNG, JPG up to 10MB</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Preview Zone */}
+                                {imagePreview && (
+                                    <div className="relative w-full md:w-64 h-40 group">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeImage}
+                                            className="absolute -top-2 -right-2 w-8 h-8 bg-white dark:bg-gray-800 text-red-500 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-20"
+                                        >
+                                            <FiX />
+                                        </button>
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
+                                            <span className="text-white text-xs font-bold px-3 py-1 bg-black/40 rounded-full backdrop-blur-sm">Current Preview</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Amounts */}

@@ -77,8 +77,15 @@ const LoanDetails = () => {
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-6">
-                  <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-                    {visuals.icon}
+                  <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden shadow-md flex-shrink-0 bg-white dark:bg-gray-800 border-2 border-white dark:border-gray-700">
+                    <img
+                      src={loan.image || "https://via.placeholder.com/150"}
+                      alt={loan.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-1 right-1 p-1 bg-white/80 dark:bg-gray-800/80 rounded-lg backdrop-blur-sm">
+                      {visuals.icon}
+                    </div>
                   </div>
                   <div>
                     <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">

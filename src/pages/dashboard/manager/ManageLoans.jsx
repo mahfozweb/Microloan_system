@@ -111,11 +111,22 @@ const ManageLoans = () => {
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900 dark:text-white">
-                        {loan.title}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block truncate max-w-[200px]">
-                        {loan.description}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 dark:border-gray-700">
+                          <img
+                            src={loan.image || "https://via.placeholder.com/40"}
+                            alt={loan.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {loan.title}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block truncate max-w-[200px]">
+                            {loan.description}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300">
