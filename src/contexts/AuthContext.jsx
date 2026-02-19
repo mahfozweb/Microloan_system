@@ -31,12 +31,13 @@ export const AuthProvider = ({ children }) => {
 
     const syncUserFromDB = async (currentUser) => {
         try {
+            // Get JWT cookie from backend
             await api.post('/jwt', {
                 email: currentUser.email,
                 name: currentUser.displayName,
             });
 
-            // Get user info from DB
+            // Get user role/status from DB
             const response = await api.get(`/user/role/${currentUser.email}`);
             const dbUser = response.data;
 
@@ -49,8 +50,19 @@ export const AuthProvider = ({ children }) => {
                 status: dbUser?.status || 'active'
             });
         } catch (error) {
-            console.error("Auth sync error:", error);
-            setUser(null);
+            console.error("Auth sync error (using Firebase fallback):", error.message);
+            toast.warning("Backend unavailable. Logging in with limited access.");
+            // IMPORTANT: Do NOT set user=null here.
+            // If the backend is unreachable, still set the user from Firebase data
+            // so the navbar shows Dashboard instead of Login/Register.
+            setUser({
+                uid: currentUser.uid,
+                email: currentUser.email,
+                name: currentUser.displayName,
+                photoURL: currentUser.photoURL,
+                role: 'borrower', // safe default until DB responds
+                status: 'active'
+            });
         }
     };
 
@@ -81,6 +93,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const register = async (email, password, userData) => {
+        // Keep loading=true so PrivateRoute waits; onAuthStateChanged will set it false
         setLoading(true);
         try {
             // Store registration data BEFORE creating Firebase user
@@ -104,57 +117,71 @@ export const AuthProvider = ({ children }) => {
             return result;
         } catch (error) {
             pendingRegistration.current = null; // clear on error
+            setLoading(false); // only set false on error; success path handled by onAuthStateChanged
             toast.error(error.response?.data?.message || error.message || 'Registration failed');
             throw error;
-        } finally {
-            setLoading(false);
         }
+        // NOTE: Do NOT call setLoading(false) in finally here.
+        // onAuthStateChanged will call setLoading(false) after syncing the user.
     };
 
     const login = async (email, password) => {
+        // Keep loading=true so PrivateRoute waits; onAuthStateChanged will set it false
         setLoading(true);
         try {
             const result = await signInWithEmailAndPassword(auth, email, password);
             toast.success('Login successful!');
             return result;
         } catch (error) {
+            setLoading(false); // only set false on error
             toast.error(error.message || 'Login failed');
             throw error;
-        } finally {
-            setLoading(false);
         }
+        // NOTE: Do NOT call setLoading(false) in finally here.
+        // onAuthStateChanged will call setLoading(false) after syncing the user.
     };
 
     const loginWithGoogle = async () => {
+        // Keep loading=true; onAuthStateChanged will set it false
         setLoading(true);
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
 
             // For Google login, save user to DB as borrower if not already exists
-            await api.post('/users', {
-                name: result.user.displayName,
-                email: result.user.email,
-                photoURL: result.user.photoURL,
-                role: 'borrower'
-            });
+            try {
+                await api.post('/users', {
+                    name: result.user.displayName,
+                    email: result.user.email,
+                    photoURL: result.user.photoURL,
+                    role: 'borrower'
+                });
+            } catch (dbErr) {
+                console.error('Failed to save Google user to DB:', dbErr);
+            }
 
             toast.success('Google login successful!');
             return result;
         } catch (error) {
+            setLoading(false); // only on error
             toast.error(error.message || 'Google login failed');
             throw error;
-        } finally {
-            setLoading(false);
         }
+        // onAuthStateChanged will call setLoading(false) after syncing the user.
     };
 
     const logout = async () => {
         try {
             await signOut(auth);
-            await api.post('/logout');
+            // Attempt backend logout, but don't block if it fails (e.g. server down)
+            try {
+                await api.post('/logout');
+            } catch (backendError) {
+                console.warn("Backend logout failed (likely network issue):", backendError.message);
+            }
             toast.success('Logged out successfully');
         } catch (error) {
+            console.error("Logout error:", error);
             toast.error('Logout failed');
             throw error;
         }

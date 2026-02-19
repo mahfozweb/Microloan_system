@@ -30,7 +30,9 @@ api.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
-            window.location.href = '/login';
+            // Do NOT do hard redirect here — let the calling code handle it
+            // window.location.href = '/login' would break the auth sync flow
+            console.warn('API 401 Unauthorized');
         }
         return Promise.reject(error);
     }

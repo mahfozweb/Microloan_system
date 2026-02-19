@@ -58,7 +58,7 @@ const Register = () => {
                 photoURL: formData.photoURL,
                 role: formData.role,
             });
-            navigate('/');
+            navigate('/dashboard');
         } catch (error) {
             console.error(error);
         } finally {
