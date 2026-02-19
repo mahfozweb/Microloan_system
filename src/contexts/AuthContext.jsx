@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     // Store pending registration data so onAuthStateChanged can use the correct role
     const pendingRegistration = useRef(null);
 
-    const syncUserFromDB = async (currentUser) => {
+    const syncUserFromDB = async (currentUser, registrationRole = null) => {
         try {
             // Get JWT cookie from backend
             await api.post('/jwt', {
@@ -41,26 +41,43 @@ export const AuthProvider = ({ children }) => {
             const response = await api.get(`/user/role/${currentUser.email}`);
             const dbUser = response.data;
 
-            setUser({
-                uid: currentUser.uid,
-                email: currentUser.email,
-                name: currentUser.displayName,
-                photoURL: currentUser.photoURL,
-                role: dbUser?.role || 'borrower',
-                status: dbUser?.status || 'active'
-            });
+            if (dbUser && dbUser.role) {
+                setUser({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    name: currentUser.displayName,
+                    photoURL: currentUser.photoURL,
+                    role: dbUser.role,
+                    status: dbUser.status || 'active'
+                });
+            } else {
+                // If user not in DB, fallback to registration role or borrower
+                console.warn("User role not found in database for:", currentUser.email);
+                setUser({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    name: currentUser.displayName,
+                    photoURL: currentUser.photoURL,
+                    role: registrationRole || 'borrower',
+                    status: 'active'
+                });
+            }
         } catch (error) {
-            console.error("Auth sync error (using Firebase fallback):", error.message);
-            toast.warning("Backend unavailable. Logging in with limited access.");
-            // IMPORTANT: Do NOT set user=null here.
-            // If the backend is unreachable, still set the user from Firebase data
-            // so the navbar shows Dashboard instead of Login/Register.
+            console.error("Auth sync error:", error.message);
+
+            // If it's a 404, the user might just be new/not synced yet
+            const isNotFoundError = error.response?.status === 404;
+
+            if (!isNotFoundError) {
+                toast.error("Connecting to server failed. Role-based features may be limited.");
+            }
+
             setUser({
                 uid: currentUser.uid,
                 email: currentUser.email,
                 name: currentUser.displayName,
                 photoURL: currentUser.photoURL,
-                role: 'borrower', // safe default until DB responds
+                role: registrationRole || 'borrower',
                 status: 'active'
             });
         }
@@ -70,8 +87,10 @@ export const AuthProvider = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 // If there's a pending registration, save to DB first with correct role
+                let registrationRole = null;
                 if (pendingRegistration.current) {
                     const { name, email, photoURL, role } = pendingRegistration.current;
+                    registrationRole = role;
                     pendingRegistration.current = null; // clear it
 
                     try {
@@ -82,7 +101,7 @@ export const AuthProvider = ({ children }) => {
                     }
                 }
 
-                await syncUserFromDB(currentUser);
+                await syncUserFromDB(currentUser, registrationRole);
             } else {
                 setUser(null);
             }
