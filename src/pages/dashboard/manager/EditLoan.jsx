@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { FiSave, FiArrowLeft } from "react-icons/fi";
+import { FiSave, FiArrowLeft, FiLayers } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
@@ -16,7 +16,7 @@ const EditLoan = () => {
   const [formData, setFormData] = useState({
     title: "",
     image: "",
-    minAmount: "",
+    category: "personal",
     minAmount: "",
     maxAmount: "",
     interest: "",
@@ -36,6 +36,7 @@ const EditLoan = () => {
           setFormData({
             title: loan.title || "",
             image: loan.image || "",
+            category: loan.category || "personal",
             minAmount: amounts[0]?.trim() || "",
             maxAmount: amounts[1]?.trim() || "",
             interest: loan.interest || "",
@@ -134,6 +135,23 @@ const EditLoan = () => {
               className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
               placeholder="e.g. Small Business Growth Fund"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <span className="flex items-center gap-2"><FiLayers className="text-primary-500" /> Category</span>
+            </label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
+            >
+              <option value="personal">Personal</option>
+              <option value="business">Business</option>
+              <option value="education">Education</option>
+              <option value="emergency">Emergency</option>
+            </select>
           </div>
 
           <div>
