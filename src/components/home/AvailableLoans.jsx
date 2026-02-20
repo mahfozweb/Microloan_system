@@ -73,14 +73,8 @@ const AvailableLoans = () => {
                 variants={itemVariants}
                 className={`rounded-3xl overflow-hidden border ${visuals.borderColor} hover:shadow-2xl transition-all duration-500 bg-white dark:bg-gray-800 flex flex-col group`}
               >
-                <div className="relative h-44 overflow-hidden">
-                  <img
-                    src={loan.image}
-                    alt={loan.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className={`absolute bottom-3 left-3 w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 ${visuals.color}`}>
+                <div className={`relative h-28 flex items-center justify-center ${visuals.color} border-b ${visuals.borderColor}`}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 bg-white/50 dark:bg-gray-800/50">
                     {visuals.icon}
                   </div>
                 </div>

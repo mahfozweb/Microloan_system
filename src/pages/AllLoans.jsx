@@ -125,15 +125,9 @@ const AllLoans = () => {
                                             exit={{ opacity: 0, scale: 0.8 }}
                                             className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden border ${visuals.borderColor} hover:shadow-2xl transition-all duration-500 flex flex-col group`}
                                         >
-                                            {/* Image Header */}
-                                            <div className="relative h-48 overflow-hidden">
-                                                <img
-                                                    src={loan.image}
-                                                    alt={loan.title}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                                <div className={`absolute bottom-4 left-4 w-12 h-12 rounded-2xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 ${visuals.color}`}>
+                                            {/* Icon Header */}
+                                            <div className={`relative h-32 flex items-center justify-center ${visuals.color} border-b ${visuals.borderColor}`}>
+                                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 bg-white/50 dark:bg-gray-800/50">
                                                     {visuals.icon}
                                                 </div>
                                             </div>
