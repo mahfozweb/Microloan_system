@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import DashboardLayout from "../../../components/dashboard/DashboardLayout";
 import { motion } from "framer-motion";
-import { FiSave, FiInfo, FiTag, FiDollarSign, FiPercent, FiClock, FiLayers } from "react-icons/fi";
+import { FiSave, FiInfo, FiTag, FiDollarSign, FiPercent, FiClock, FiLayers, FiImage } from "react-icons/fi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import api from "../../../services/api";
@@ -12,6 +12,7 @@ const AddLoan = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         title: "",
+        image: "",
         category: "personal",
         minAmount: "",
         maxAmount: "",
@@ -106,6 +107,21 @@ const AddLoan = () => {
                                     <option value="education">Education</option>
                                     <option value="emergency">Emergency</option>
                                 </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                    <FiImage className="text-primary-500" /> Loan Image URL
+                                </label>
+                                <input
+                                    type="url"
+                                    name="image"
+                                    required
+                                    value={formData.image}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                    placeholder="https://example.com/image.jpg"
+                                />
                             </div>
                         </div>
 

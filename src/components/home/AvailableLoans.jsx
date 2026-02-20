@@ -73,10 +73,18 @@ const AvailableLoans = () => {
                 variants={itemVariants}
                 className={`rounded-3xl overflow-hidden border ${visuals.borderColor} hover:shadow-2xl transition-all duration-500 bg-white dark:bg-gray-800 flex flex-col group`}
               >
-                <div className={`relative h-28 flex items-center justify-center ${visuals.color} border-b ${visuals.borderColor}`}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 bg-white/50 dark:bg-gray-800/50">
-                    {visuals.icon}
-                  </div>
+                <div className={`relative h-40 flex items-center justify-center ${loan.image ? 'bg-gray-100 dark:bg-gray-700' : visuals.color} border-b ${visuals.borderColor} overflow-hidden`}>
+                  {loan.image ? (
+                    <img
+                      src={loan.image}
+                      alt={loan.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 bg-white/50 dark:bg-gray-800/50">
+                      {visuals.icon}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-5 flex flex-col flex-grow">

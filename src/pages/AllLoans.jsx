@@ -125,11 +125,19 @@ const AllLoans = () => {
                                             exit={{ opacity: 0, scale: 0.8 }}
                                             className={`bg-white dark:bg-gray-800 rounded-3xl overflow-hidden border ${visuals.borderColor} hover:shadow-2xl transition-all duration-500 flex flex-col group`}
                                         >
-                                            {/* Icon Header */}
-                                            <div className={`relative h-32 flex items-center justify-center ${visuals.color} border-b ${visuals.borderColor}`}>
-                                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 bg-white/50 dark:bg-gray-800/50">
-                                                    {visuals.icon}
-                                                </div>
+                                            {/* Icon/Image Header */}
+                                            <div className={`relative h-48 flex items-center justify-center ${loan.image ? 'bg-gray-100 dark:bg-gray-700' : visuals.color} border-b ${visuals.borderColor} overflow-hidden`}>
+                                                {loan.image ? (
+                                                    <img
+                                                        src={loan.image}
+                                                        alt={loan.title}
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center backdrop-blur-md transition-transform group-hover:scale-110 duration-300 bg-white/50 dark:bg-gray-800/50">
+                                                        {visuals.icon}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="p-6 flex flex-col flex-grow">
