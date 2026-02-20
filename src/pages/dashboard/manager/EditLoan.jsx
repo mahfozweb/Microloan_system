@@ -15,6 +15,8 @@ const EditLoan = () => {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
+    image: "",
+    minAmount: "",
     minAmount: "",
     maxAmount: "",
     interest: "",
@@ -33,6 +35,7 @@ const EditLoan = () => {
           const amounts = loan.amount ? loan.amount.replace(/\$|,/g, "").split(" - ") : ["", ""];
           setFormData({
             title: loan.title || "",
+            image: loan.image || "",
             minAmount: amounts[0]?.trim() || "",
             maxAmount: amounts[1]?.trim() || "",
             interest: loan.interest || "",
@@ -130,6 +133,20 @@ const EditLoan = () => {
               required
               className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
               placeholder="e.g. Small Business Growth Fund"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Loan Image URL
+            </label>
+            <input
+              type="url"
+              name="image"
+              value={formData.image}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-gray-900 dark:text-white"
+              placeholder="https://example.com/image.jpg"
             />
           </div>
 

@@ -14,7 +14,7 @@ const AvailableLoans = () => {
     const fetchLoans = async () => {
       try {
         const response = await api.get('/loans');
-        setLoans(response.data.slice(0, 8));
+        setLoans(response.data.slice(0, 6));
       } catch (error) {
         console.error("Error fetching home loans:", error);
       } finally {
